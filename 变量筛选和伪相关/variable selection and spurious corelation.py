@@ -16,6 +16,7 @@ import seaborn as sns
 from sklearn.linear_model import Lasso, Ridge, LinearRegression
 from sklearn.model_selection import cross_val_score
 from sklearn.datasets import load_diabetes
+from sklearn.ensemble import RandomForestRegressor
 #from sklearn.model_selection import GridSearchCV
 import pandas as pd
 import warnings 
@@ -57,6 +58,7 @@ diabetes_y = diabetes.target
 lasso = Lasso(alpha=0.1)
 ridge = Ridge(alpha=0.1)
 clf = LinearRegression()
+rf = RandomForestRegressor(n_estimators = 500)
 
 score = np.around(np.sqrt(-np.mean(cross_val_score(lasso, diabetes_X, diabetes_y, scoring='neg_mean_squared_error'))), 2)
 print('raw score with lasso: %s' % score)
@@ -68,7 +70,7 @@ score = np.around(np.sqrt(-np.mean(cross_val_score(clf, diabetes_X, diabetes_y, 
 print('raw score with linear model: %s' % score)
 
 
-# Lasso 与 噪声维度的关系
+# Lasso: 训练效果与噪声维度的关系
 noise_ps = [10, 50, 100, 500, 1000, 2000]
 for p in noise_ps:
     noise_X = np.random.rand(diabetes_X.shape[0], p)
@@ -77,6 +79,21 @@ for p in noise_ps:
     print('p:%s, score:%s' % (p, score))    
 
 
+# RandomForest: 训练效果与噪声维度的关系
+noise_ps = [10, 20, 50, 100, 500, 1000, 2000]
+rf_errors = []
+for p in noise_ps:
+    noise_X = np.random.rand(diabetes_X.shape[0], p)
+    X = np.column_stack((diabetes_X, noise_X))
+    error = np.around(np.sqrt(-np.mean(cross_val_score(lasso, X, diabetes_y, scoring='neg_mean_squared_error'))), 2)
+    rf_errors.append(error) 
+
+plt.figure(figsize = (12, 7))
+plt.plot(noise_ps, rf_errors, 'o-')
+plt.xlabel('噪声维度')
+plt.ylabel('标准误差')
+plt.tight_layout()
+plt.savefig('随机森林：误差 vs 噪声维度.png', dpi=150) 
 
 
 ##  # 错误的做法
